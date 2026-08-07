@@ -1,0 +1,646 @@
+.app {
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  padding: 0.75rem;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 50% -10%, #23283a 0%, transparent 60%),
+    #0a0b0f;
+}
+
+.chassis {
+  width: 100%;
+  max-width: 1600px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-radius: 18px;
+  padding: 0.7rem 1rem;
+  background: linear-gradient(180deg, #1c1e26 0%, #14151b 100%);
+  border: 1px solid #2c2f3a;
+  box-shadow:
+    0 30px 60px -20px rgba(0, 0, 0, 0.7),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.45rem;
+  border-bottom: 1px solid #2a2d37;
+  flex: 0 0 auto;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.brand-mark {
+  display: grid;
+  place-items: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: 0.03em;
+  color: #0a0b0f;
+  background: linear-gradient(135deg, #ffb648, #ff7a45);
+  box-shadow: 0 0 14px rgba(255, 138, 60, 0.45);
+}
+
+.brand-text h1 {
+  font-size: 1.15rem;
+  margin: 0;
+  letter-spacing: 0.02em;
+}
+
+.brand-sub {
+  font-size: 0.72rem;
+  color: #7d8290;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  background: #1a1c24;
+  border: 1px solid #2a2d37;
+}
+
+.status-led {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: #4a4f5c;
+}
+
+.status.connected {
+  color: #7ee7a0;
+}
+.status.connected .status-led {
+  background: #33e07a;
+  box-shadow: 0 0 8px 2px rgba(51, 224, 122, 0.65);
+}
+
+.status.disconnected {
+  color: #f3a1a1;
+}
+.status.disconnected .status-led {
+  background: #ff5c5c;
+  box-shadow: 0 0 8px 2px rgba(255, 92, 92, 0.55);
+}
+
+.scope-panel {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.4rem 0.7rem 0.45rem;
+  margin-bottom: 0.5rem;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #191b22 0%, #15161c 100%);
+  border: 1px solid #262933;
+}
+
+.scope-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.scope-title {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #8a8fa0;
+}
+
+.scope-hint {
+  font-size: 0.66rem;
+  color: #5f6472;
+}
+
+.scope-canvas-wrap {
+  position: relative;
+  height: 48px;
+  border-radius: 8px;
+  background: #0d0e12;
+  border: 1px solid #23262f;
+  overflow: hidden;
+}
+
+.scope-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.scope-overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 0.72rem;
+  color: #6b7080;
+  background: rgba(13, 14, 18, 0.55);
+}
+
+.panels-row {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-auto-rows: minmax(0, 1fr);
+  gap: 0.5rem;
+  overflow: hidden;
+  margin-bottom: 0.6rem;
+}
+
+.panels-row .panel {
+  /* Grid (not flex-wrap) so every panel gets an equal, shrinkable share of
+     the row's height too -- 4 columns x 3 rows comfortably fits all 11
+     panels without ever needing to scroll. */
+  min-width: 0;
+  min-height: 0;
+}
+
+@media (max-width: 1100px) {
+  .panels-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 860px) {
+  .app {
+    height: auto;
+    min-height: 100vh;
+    overflow: auto;
+  }
+
+  .chassis {
+    height: auto;
+  }
+
+  .panels-row {
+    display: flex;
+    flex-direction: column;
+    overflow: visible;
+  }
+}
+
+.keyboard-panel {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.4rem 0.7rem 0.45rem;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #191b22 0%, #15161c 100%);
+  border: 1px solid #262933;
+}
+
+.keyboard-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.keyboard-title {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #8a8fa0;
+}
+
+.keyboard-hint {
+  font-size: 0.68rem;
+  color: #5f6472;
+}
+
+.keyboard-strip {
+  position: relative;
+  height: 74px;
+  width: 100%;
+}
+
+.white-keys {
+  display: flex;
+  height: 100%;
+  width: 100%;
+}
+
+.key.white {
+  position: relative;
+  flex: 1 1 0;
+  width: 0; /* let flex-basis drive equal widths, ignoring intrinsic content width */
+  height: 100%;
+  background: linear-gradient(180deg, #f4f4f2 0%, #dcdce2 100%);
+  border: 1px solid #0d0e12;
+  border-radius: 0 0 4px 4px;
+  box-sizing: border-box;
+  cursor: pointer;
+  touch-action: none;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 4px;
+}
+
+.key.white:hover {
+  background: linear-gradient(180deg, #ffffff 0%, #e6e6ec 100%);
+}
+
+.key.white:active {
+  background: linear-gradient(180deg, #ffcf9a 0%, #ffb257 100%);
+}
+
+.key.white.active {
+  background: linear-gradient(180deg, #ffcf9a 0%, #ffb257 100%);
+}
+
+.key-label {
+  font-size: 0.55rem;
+  color: #7a7d86;
+  pointer-events: none;
+  user-select: none;
+}
+
+.black-keys {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 62%;
+  pointer-events: none;
+}
+
+.key.black {
+  /* Positioned/sized as percentages of the full-width strip (rather than a
+     fixed pixel white-key width) so the whole keyboard stretches to fill
+     the available viewport width. --white-count is the total number of
+     white keys, so 100% / white-count is one white key's share of width. */
+  --black-key-width: calc((100% / var(--white-count)) * 0.6);
+  position: absolute;
+  left: calc((var(--white-index) * (100% / var(--white-count))) - (var(--black-key-width) / 2));
+  width: var(--black-key-width);
+  height: 100%;
+  background: linear-gradient(180deg, #333743 0%, #101116 100%);
+  border: 1px solid #000;
+  border-radius: 0 0 3px 3px;
+  cursor: pointer;
+  touch-action: none;
+  pointer-events: auto;
+  z-index: 1;
+}
+
+.key.black:hover {
+  background: linear-gradient(180deg, #454a58 0%, #1a1c22 100%);
+}
+
+.key.black:active {
+  background: linear-gradient(180deg, #ff9a3d 0%, #d9761c 100%);
+}
+
+.key.black.active {
+  background: linear-gradient(180deg, #ff9a3d 0%, #d9761c 100%);
+}
+
+.panel {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 0.5rem 0.6rem;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #191b22 0%, #15161c 100%);
+  border: 1px solid #262933;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  overflow: hidden;
+}
+
+.panel h2 {
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #8a8fa0;
+  margin: 0 0 0.35rem;
+  flex: 0 0 auto;
+}
+
+.panel-visual {
+  flex: 1 1 auto;
+  min-height: 0;
+  margin-bottom: 0.4rem;
+  padding: 0.3rem 0.4rem;
+  border-radius: 8px;
+  background: #101116;
+  border: 1px solid #23262f;
+}
+
+.param-graph {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.knob-grid {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  align-content: start;
+  gap: 0.35rem 0.4rem;
+}
+
+.graph-baseline {
+  stroke: #2a2d37;
+  stroke-width: 1;
+}
+
+.graph-marker {
+  stroke: #3a3e4c;
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+}
+
+.graph-line {
+  fill: none;
+  stroke: #ff9a3d;
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 3px rgba(255, 154, 61, 0.5));
+}
+
+.graph-line-ghost {
+  stroke: rgba(255, 154, 61, 0.35);
+  stroke-width: 1.2;
+  filter: none;
+}
+
+.graph-tap {
+  fill: #ff9a3d;
+  filter: drop-shadow(0 0 3px rgba(255, 154, 61, 0.5));
+}
+
+.graph-label {
+  fill: rgba(255, 154, 61, 0.6);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.mod-row-label {
+  fill: #b6bacb;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.graph-fill {
+  fill: rgba(255, 154, 61, 0.12);
+  stroke: none;
+}
+
+/* Waveform selector: a row of pill buttons standing in for a knob's grid
+   cell, so it lines up with the other controls in the same panel. */
+.wave-select {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.wave-select-options {
+  display: flex;
+  gap: 0.2rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.wave-select-btn {
+  font-size: 0.55rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: #9aa0ac;
+  background: #1a1c23;
+  border: 1px solid #2a2d37;
+  border-radius: 5px;
+  padding: 0.18rem 0.4rem;
+  cursor: pointer;
+}
+
+.wave-select-btn:hover {
+  color: #e4e6eb;
+  border-color: #3a3e4c;
+}
+
+.wave-select-btn.active {
+  color: #0a0b0f;
+  background: #ff9a3d;
+  border-color: #ff9a3d;
+  font-weight: 600;
+}
+
+/* Compact native dropdown, used for controls with many options (mod matrix
+   source/destination) where pill buttons would wrap and blow out panel
+   height. */
+.dropdown-select {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.dropdown-select-input {
+  width: 100%;
+  font-size: 0.58rem;
+  color: #e4e6eb;
+  background: #1a1c23;
+  border: 1px solid #2a2d37;
+  border-radius: 5px;
+  padding: 0.2rem 0.25rem;
+  cursor: pointer;
+}
+
+.dropdown-select-input:hover {
+  border-color: #3a3e4c;
+}
+
+.mod-matrix-grid {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.lfo-graph-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.bipolar-row {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.bipolar-bar {
+  flex: 1;
+  min-width: 140px;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.bipolar-label {
+  font-size: 0.68rem;
+  color: #8a8fa0;
+  white-space: nowrap;
+}
+
+.bipolar-track {
+  position: relative;
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: #1e2028;
+  overflow: hidden;
+}
+
+.bipolar-center {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: #3a3e4c;
+}
+
+.bipolar-fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: #ff9a3d;
+  box-shadow: 0 0 6px rgba(255, 154, 61, 0.6);
+}
+
+.knob {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  user-select: none;
+}
+
+.knob-dial-wrap {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  cursor: grab;
+  touch-action: none;
+}
+
+.knob-dial-wrap:active {
+  cursor: grabbing;
+}
+
+.knob-dial-wrap:focus-visible {
+  outline: 2px solid #5aa9ff;
+  outline-offset: 4px;
+  border-radius: 50%;
+}
+
+/* Background arc track (dim) plus the "lit" portion up to the current
+   value, drawn as a conic-gradient ring so it reads like an LED indicator
+   ring around a hardware knob. */
+.knob-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(
+    from -135deg,
+    #ff9a3d 0deg var(--fill-deg),
+    #2a2d37 var(--fill-deg) 270deg,
+    transparent 270deg 360deg
+  );
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 4px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 4px));
+}
+
+.knob-dial {
+  position: absolute;
+  inset: 6px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #3c4050, #1a1c23 70%);
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.5),
+    inset 0 1px 1px rgba(255, 255, 255, 0.08),
+    inset 0 -2px 3px rgba(0, 0, 0, 0.6);
+}
+
+/* Anchored at the bottom (the knob's center) and extending upward, so that
+   at rotate(0deg) it points to 12 o'clock -- the same "north = 0deg"
+   reference used by the conic-gradient ring above, keeping the needle and
+   the lit arc perfectly in sync as the value changes. */
+.knob-pointer {
+  position: absolute;
+  left: 50%;
+  bottom: 50%;
+  width: 2px;
+  height: 40%;
+  margin-left: -1px;
+  transform-origin: 50% 100%;
+  background: #ff9a3d;
+  border-radius: 2px;
+  box-shadow: 0 0 4px rgba(255, 154, 61, 0.7);
+}
+
+.knob-caption {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+  text-align: center;
+}
+
+.knob-label {
+  font-size: 0.52rem;
+  color: #9aa0ac;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  line-height: 1.1;
+}
+
+/* Small digital "LCD" style readout adjacent to each knob, echoing the
+   segment displays on real hardware synths. */
+.knob-readout {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.56rem;
+  font-weight: 600;
+  color: #7cffb0;
+  background: #0d1310;
+  border: 1px solid #1f2b23;
+  border-radius: 3px;
+  padding: 0.05rem 0.3rem;
+  min-width: 2.8rem;
+  text-align: center;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.6);
+  text-shadow: 0 0 4px rgba(124, 255, 176, 0.6);
+}
