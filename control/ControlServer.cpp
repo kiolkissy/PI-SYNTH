@@ -5,6 +5,8 @@
 
 #include <algorithm>
 #include <atomic>
+#include <chrono>
+#include <cstdint>
 #include <cstdio>
 #include <cstring>
 #include <deque>
@@ -19,6 +21,9 @@ namespace synth {
 struct ControlServer::Impl {
     lws_context* context = nullptr;
     std::thread serviceThread;
+    // Wakes the service thread on a fixed interval; see start() for why the
+    // service loop cannot rely on lws_service()'s own timeout.
+    std::thread pumpThread;
     std::atomic<bool> running{false};
     ParamQueue* paramQueue = nullptr;
     NoteQueue* noteQueue = nullptr;
@@ -30,9 +35,15 @@ struct ControlServer::Impl {
     std::vector<lws*> clients;
 
     // Latest waveform snapshot, pre-serialized to JSON once per broadcast
-    // rather than once per client.
+    // rather than once per client. `waveformSeq` increments on every update so
+    // a client is only sent each snapshot once -- libwebsockets can invoke
+    // LWS_CALLBACK_SERVER_WRITEABLE more often than new snapshots arrive (for
+    // example when finishing a partially-buffered send), and without this the
+    // same frame is re-sent thousands of times a second.
     std::mutex waveformMutex;
     std::string latestWaveformJson;
+    uint64_t waveformSeq = 0;
+    std::unordered_map<lws*, uint64_t> lastSentWaveformSeq;
 
     // Outbound note-on/off events (from real MIDI hardware, so the browser's
     // onscreen keyboard can highlight external-keyboard playing too). Unlike
@@ -115,6 +126,8 @@ int wsCallback(lws* wsi, lws_callback_reasons reason, void* /*user*/, void* in, 
                                  impl->clients.end());
             std::lock_guard<std::mutex> noteLock(impl->noteEchoMutex);
             impl->pendingNoteEchoes.erase(wsi);
+            std::lock_guard<std::mutex> waveLock(impl->waveformMutex);
+            impl->lastSentWaveformSeq.erase(wsi);
             break;
         }
         case LWS_CALLBACK_RECEIVE: {
@@ -144,12 +157,19 @@ int wsCallback(lws* wsi, lws_callback_reasons reason, void* /*user*/, void* in, 
             std::string json;
             {
                 std::lock_guard<std::mutex> lock(impl->waveformMutex);
-                json = impl->latestWaveformJson;
+                // Only send a snapshot this client has not already received.
+                if (impl->lastSentWaveformSeq[wsi] != impl->waveformSeq) {
+                    json = impl->latestWaveformJson;
+                    impl->lastSentWaveformSeq[wsi] = impl->waveformSeq;
+                }
             }
             if (!json.empty()) {
                 std::vector<unsigned char> buf(LWS_PRE + json.size());
                 std::memcpy(buf.data() + LWS_PRE, json.data(), json.size());
-                lws_write(wsi, buf.data() + LWS_PRE, json.size(), LWS_WRITE_TEXT);
+                if (lws_write(wsi, buf.data() + LWS_PRE, json.size(), LWS_WRITE_TEXT) < 0) {
+                    std::fprintf(stderr, "ControlServer: waveform write failed\n");
+                    return -1;
+                }
             }
             break;
         }
@@ -205,12 +225,28 @@ bool ControlServer::start(int port, ParamQueue& outboundParamsToAudioThread,
                 {
                     std::lock_guard<std::mutex> lock(impl_->waveformMutex);
                     impl_->latestWaveformJson = buildWaveformJson(snapshot);
+                    ++impl_->waveformSeq;
                 }
                 std::lock_guard<std::mutex> lock(impl_->clientsMutex);
                 for (lws* wsi : impl_->clients) {
                     lws_callback_on_writable(wsi);
                 }
             }
+        }
+    });
+
+    // libwebsockets ignores lws_service()'s timeout argument (it is retained
+    // only for API compatibility), so the service thread otherwise sits in
+    // poll() until a socket event arrives. The waveform queue is filled by the
+    // audio thread, which is invisible to poll(), so without an external nudge
+    // the scope only updated when the browser happened to send a message.
+    // lws_cancel_service() is the documented thread-safe way to break the
+    // service loop out of poll(); doing so on a timer gives the drain above a
+    // steady ~40Hz tick, comfortably above the ~31Hz snapshot rate.
+    impl_->pumpThread = std::thread([this] {
+        while (impl_->running.load()) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(25));
+            if (impl_->context) lws_cancel_service(impl_->context);
         }
     });
 
@@ -236,9 +272,11 @@ void ControlServer::broadcastNoteEvent(int note, bool noteOn, float velocity) {
 
 void ControlServer::stop() {
     if (!impl_->running.exchange(false)) return;
-    // lws_service() blocks in poll() for up to its timeout argument; without
-    // this it can take much longer than expected to notice `running` went
-    // false, since the poll only wakes on socket activity or its timeout.
+    // lws_service() blocks in poll() until a socket event arrives; without
+    // this it would take much longer than expected to notice `running` went
+    // false. The pump thread is joined first so it cannot call
+    // lws_cancel_service() on a context that is about to be destroyed.
+    if (impl_->pumpThread.joinable()) impl_->pumpThread.join();
     if (impl_->context) lws_cancel_service(impl_->context);
     if (impl_->serviceThread.joinable()) impl_->serviceThread.join();
     if (impl_->context) {
