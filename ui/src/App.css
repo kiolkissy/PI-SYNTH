@@ -166,18 +166,33 @@ header {
   min-height: 0;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  grid-auto-rows: minmax(0, 1fr);
+  /* Rows share the available height equally when there is enough room (so the
+     whole panel wall fits with no scrolling), but never shrink below the
+     height the densest panel needs (waveform selector + two knob rows) -- on
+     short viewports the row scrolls instead of clipping controls. A fixed
+     floor is used rather than min-content because the graph SVGs carry an
+     intrinsic aspect ratio, which would otherwise inflate the minimum. */
+  grid-auto-rows: minmax(230px, 1fr);
   gap: 0.5rem;
-  overflow: hidden;
+  overflow: hidden auto;
   margin-bottom: 0.6rem;
 }
 
 .panels-row .panel {
   /* Grid (not flex-wrap) so every panel gets an equal, shrinkable share of
-     the row's height too -- 4 columns x 3 rows comfortably fits all 11
-     panels without ever needing to scroll. */
+     the row's height too -- every panel then fits without ever scrolling. */
   min-width: 0;
   min-height: 0;
+}
+
+@media (min-width: 1400px) {
+  /* On wide screens, 6 columns puts all 11 panels on 2 rows instead of 3.
+     Height is the scarce axis here: the oscillator panels need a waveform
+     selector plus two knob rows, which does not fit in a third of the
+     available height, but does fit comfortably in half of it. */
+  .panels-row {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 1100px) {
@@ -201,6 +216,14 @@ header {
     display: flex;
     flex-direction: column;
     overflow: visible;
+  }
+
+  .panels-row .panel {
+    /* The base .panel rule makes panels shrinkable so they can share a fixed
+       height; in the stacked layout there is no height to share, so panels
+       size to their content and the page scrolls instead. */
+    flex: 0 0 auto;
+    min-height: 230px;
   }
 }
 
@@ -492,25 +515,33 @@ header {
 .lfo-graph-wrap {
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
+  gap: 0.35rem;
+  height: 100%;
+  min-height: 0;
+}
+
+.lfo-graph-wrap .param-graph {
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .bipolar-row {
   display: flex;
-  gap: 1.5rem;
-  flex-wrap: wrap;
+  flex-direction: column;
+  flex: 0 0 auto;
+  gap: 0.25rem;
 }
 
 .bipolar-bar {
-  flex: 1;
-  min-width: 140px;
+  flex: 0 0 auto;
+  min-width: 0;
   display: flex;
   align-items: center;
-  gap: 0.6rem;
+  gap: 0.4rem;
 }
 
 .bipolar-label {
-  font-size: 0.68rem;
+  font-size: 0.6rem;
   color: #8a8fa0;
   white-space: nowrap;
 }
